@@ -26,4 +26,4 @@ sudo ./mn-setup
 
 ### Options
 
-For more info about available options run mn-setup --info
+For more info about available options run mn-setup --help
