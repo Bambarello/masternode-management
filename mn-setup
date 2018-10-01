@@ -39,10 +39,16 @@ for i in "$@"; do
             CACHE_SIZE="${i#*=}"
             shift
             ;;
+        --info)
+            node_info
+            exit 0
+            shift
+            ;;
         --help)
             echo "usage: mn-setup [options]"
             echo "    --rpcport=PORT     Specify custom RPC port for geth, 8545 is used by default"
             echo "    --cache=SIZE       Specify cache size for geth, 512Mb is used by default"
+            echo "    --info             Show node parameters"
             exit 0
             shift
             ;;
