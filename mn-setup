@@ -1,0 +1,131 @@
+#!/bin/bash
+
+USERNAME=genom
+RELEASE_VERSION=0.1.0
+RELEASE=https://github.com/genom-project/genom/releases/download/${RELEASE_VERSION}/geth-linux-amd64
+SYSTEMD_UNIT_FILE=/etc/systemd/system/genomnode.service
+RPCPORT=8545
+CACHE_SIZE=512
+
+function create_user() {
+    echo -e "\e[32mCreate $USERNAME user\e[0m"
+    useradd -m -G systemd-journal $USERNAME
+}
+
+function remove_user() {
+    echo -e "\e[32mRemove user $USERNAME\e[0m"
+    userdel -r $USERNAME 2> /dev/null
+    if [[ $? -ne 0 ]]; then
+        echo -e "\e[41mCan't delete genome user, maybe it's currently used\e[0m"
+        exit 1
+    fi
+}
+
+function node_info() {
+    enode=$(su - genom -c "/home/genom/geth attach --exec admin.nodeInfo.enode")
+    ip=$(su - genom -c "/home/genom/geth attach --exec admin.peers[0].network.localAddress")
+
+    echo "Enode ID: `echo ${enode%@*} | sed -e 's,\"enode://,,'`"
+    echo "IP address: `echo ${ip%:*} | sed -e 's/\"//'`"
+}
+
+for i in "$@"; do
+    case $i in
+        --rpcport=*)
+            RPCPORT="${i#*=}"
+            shift
+            ;;
+        --cache=*)
+            CACHE_SIZE="${i#*=}"
+            shift
+            ;;
+        --help)
+            echo "usage: mn-setup [options]"
+            echo "    --rpcport=PORT     Specify custom RPC port for geth, 8545 is used by default"
+            echo "    --cache=SIZE       Specify cache size for geth, 512Mb is used by default"
+            exit 0
+            shift
+            ;;
+    esac
+done
+
+echo -e "\e[32mCheck previous masternode installation\e[0m"
+
+systemctl status genomnode --no-pager --full 2>/dev/null
+
+if [[ $? -eq 0 ]]; then
+    echo -e "\e[33mMasternode is up, stop it\e[0m"
+    systemctl stop genomnode
+fi
+
+netstat -natup | grep LISTEN | grep $RPCPORT
+
+if [[ $? -eq 0 ]]; then
+    echo -e "\e[41mRPC port $RPCPORT is used, specify another one using --rpcport parameter\e[0m"
+    exit 1
+fi
+
+getent passwd $USERNAME > /dev/null
+
+if [[ $? -eq 0 ]]; then
+    remove_user
+fi
+
+create_user
+
+echo -e "\e[32mDownload geth release $RELEASE\e[0m"
+
+wget $RELEASE -O /home/genom/geth -o /dev/null
+
+chown genom.genom /home/genom/geth
+
+chmod 755 /home/genom/geth
+
+echo -e "\e[32mCreate systemd unit file $SYSTEMD_UNIT_FILE\e[0m"
+
+if [[ -f $SYSTEMD_UNIT_FILE ]]; then
+    systemctl stop genomnode
+    systemctl disable genomnode
+    rm -f $SYSTEMD_UNIT_FILE
+fi
+
+echo -e "\e[32mConfigure static nodes list\e[0m"
+
+mkdir -p /home/genom/.genom/geth
+chown -R genom.genom /home/genom/.genom
+
+cat > /home/genom/.genom/geth/static-nodes.json << EOF
+[
+    "enode://f700e2907b89b832e4e5b27a1aa5c6710eded2c8400df310a7d7a6c656d299d8c5d865ee7b3026f14eb827f5a28c512fbc8f3e21c2a2c5324006b1d6ffa0e4a7@[37.143.13.112]:30303"
+]
+EOF
+
+cat > $SYSTEMD_UNIT_FILE << EOF
+[Unit]
+Description=Genom Client -- masternode service
+After=network.target
+
+[Service]
+User=genom
+Group=genom
+Type=simple
+Restart=always
+RestartSec=30s
+ExecStart=/home/genom/geth --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --extradata "masternode" --fast --bootnodes "enode://f700e2907b89b832e4e5b27a1aa5c6710eded2c8400df310a7d7a6c656d299d8c5d865ee7b3026f14eb827f5a28c512fbc8f3e21c2a2c5324006b1d6ffa0e4a7@[37.143.13.112]:30303"
+
+[Install]
+WantedBy=default.target
+EOF
+
+echo -e "\e[32mEnable and start genomnode service\e[0m"
+
+systemctl enable genomnode
+systemctl start genomnode
+
+journalctl --unit=genomnode | tail
+
+sleep 5
+
+echo -e "\e[32mInstallation complete. MN registration data:\e[0m"
+
+node_info
