@@ -64,6 +64,12 @@ if [[ $? -eq 0 ]]; then
     systemctl stop genomnode
 fi
 
+which netstat > /dev/null
+
+if [[ $? -ne 0 ]]; then
+    apt-get -y -q install net-tools
+fi
+
 netstat -natup | grep LISTEN | grep $RPCPORT
 
 if [[ $? -eq 0 ]]; then
