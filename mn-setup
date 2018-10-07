@@ -1,7 +1,7 @@
 #!/bin/bash
 
 USERNAME=genom
-RELEASE_VERSION=0.1.0
+RELEASE_VERSION=0.2.0
 RELEASE=https://github.com/genom-project/genom/releases/download/${RELEASE_VERSION}/geth-linux-amd64
 SYSTEMD_UNIT_FILE=/etc/systemd/system/genomnode.service
 RPCPORT=8545
