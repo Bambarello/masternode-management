@@ -132,6 +132,7 @@ EOF
 
 echo -e "\e[32mEnable and start genomnode service\e[0m"
 
+systemctl daemon-reload
 systemctl enable genomnode
 systemctl start genomnode
 
