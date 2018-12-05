@@ -7,6 +7,7 @@ SYSTEMD_UNIT_FILE=/etc/systemd/system/genomnode.service
 RPCPORT=8545
 P2PPORT=30303
 CACHE_SIZE=512
+FROM_SCRATCH=n
 
 function install_packages() {
     echo -e "\e[32mInstall necessary software\e[0m"
@@ -136,7 +137,7 @@ for i in "$@"; do
             shift
             ;;
         --upgrade)
-            install_packeges
+            install_packages
             stop_node
             check_rpc_port
             download_geth_release
@@ -144,9 +145,14 @@ for i in "$@"; do
             exit 0
             shift
             ;;
+        --from-scratch)
+            FROM_SCRATCH=y
+            shift
+            ;;
         --help)
             echo "usage: mn-setup [options]"
-            echo "    --upgrade          upgrade geth version"
+            echo "    --upgrade          Upgrade geth version"
+            echo "    --from-scratch     Install node from scratch"
             echo "    --rpcport=PORT     Specify custom RPC port for geth, 8545 is used by default"
             echo "    --p2pport=PORT     Specify custom P2P port for geth, 30303 is used by default"
             echo "    --cache=SIZE       Specify cache size for geth, 512Mb is used by default"
@@ -157,18 +163,29 @@ for i in "$@"; do
     esac
 done
 
-install_packages
+if [[ $FROM_SCRATCH != "n" ]]; then
 
-stop_node
+    read -p "All data will be removed. Are you sure? " -n 1 -r
 
-check_rpc_port
+    echo
 
-create_user
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        install_packages
 
-download_geth_release
+        stop_node
 
-install_genom_service
+        check_rpc_port
 
-journalctl --unit=genomnode | tail
+        create_user
 
-node_info
+        download_geth_release
+
+        install_genom_service
+
+        journalctl --unit=genomnode | tail
+
+        node_info
+    fi
+else
+    echo "Nothing to do, please specify --upgrade or --from scratch flag"
+fi
