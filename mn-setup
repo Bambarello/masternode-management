@@ -39,6 +39,7 @@ function node_info() {
     enode=$(su - genom -c "/home/genom/geth attach --exec admin.nodeInfo.enode")
 
     echo "Enode ID: `echo ${enode%@*} | sed -e 's,\"enode://,,'`"
+    echo "P2P Port: $P2PPORT"
     echo "RPC Port: $RPCPORT"
     echo "IP address: `curl -s ifconfig.co`"
 }
