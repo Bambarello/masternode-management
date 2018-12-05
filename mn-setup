@@ -5,6 +5,7 @@ RELEASE_VERSION=0.3.0
 RELEASE=https://github.com/genom-project/genom/releases/download/${RELEASE_VERSION}/geth-linux-amd64
 SYSTEMD_UNIT_FILE=/etc/systemd/system/genomnode.service
 RPCPORT=8545
+P2PPORT=30303
 CACHE_SIZE=512
 
 function install_packages() {
@@ -90,7 +91,7 @@ Group=genom
 Type=simple
 Restart=always
 RestartSec=30s
-ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild
+ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild --port $P2PPORT
 
 [Install]
 WantedBy=default.target
@@ -120,6 +121,10 @@ for i in "$@"; do
             RPCPORT="${i#*=}"
             shift
             ;;
+        --p2pport=*)
+            P2PPORT="${i#*=}"
+            shift
+            ;;
         --cache=*)
             CACHE_SIZE="${i#*=}"
             shift
@@ -132,6 +137,7 @@ for i in "$@"; do
         --help)
             echo "usage: mn-setup [options]"
             echo "    --rpcport=PORT     Specify custom RPC port for geth, 8545 is used by default"
+            echo "    --p2pport=PORT     Specify custom P2P port for geth, 30303 is used by default"
             echo "    --cache=SIZE       Specify cache size for geth, 512Mb is used by default"
             echo "    --info             Show node parameters"
             exit 0
