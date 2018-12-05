@@ -23,10 +23,9 @@ function remove_user() {
 
 function node_info() {
     enode=$(su - genom -c "/home/genom/geth attach --exec admin.nodeInfo.enode")
-    ip=$(su - genom -c "/home/genom/geth attach --exec admin.peers[0].network.localAddress")
 
     echo "Enode ID: `echo ${enode%@*} | sed -e 's,\"enode://,,'`"
-    echo "IP address: `echo ${ip%:*} | sed -e 's/\"//'`"
+    echo "IP address: `curl -s ifconfig.co`"
 }
 
 function download_geth_release() {
@@ -137,8 +136,6 @@ systemctl enable genomnode
 systemctl start genomnode
 
 journalctl --unit=genomnode | tail
-
-sleep 5
 
 echo -e "\e[32mInstallation complete. MN registration data:\e[0m"
 
