@@ -33,9 +33,12 @@ function remove_user() {
 }
 
 function node_info() {
+    echo -e "\e[32mInstallation complete. MN registration data:\e[0m"
+
     enode=$(su - genom -c "/home/genom/geth attach --exec admin.nodeInfo.enode")
 
     echo "Enode ID: `echo ${enode%@*} | sed -e 's,\"enode://,,'`"
+    echo "RPC Port: $RPCPORT"
     echo "IP address: `curl -s ifconfig.co`"
 }
 
@@ -100,6 +103,16 @@ EOF
     systemctl start genomnode
 }
 
+function stop_node() {
+    echo -e "\e[32mCheck previous masternode installation\e[0m"
+
+    systemctl status genomnode --no-pager --full 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        echo -e "\e[33mMasternode is up, stop it\e[0m"
+        systemctl stop genomnode
+    fi
+}
 
 for i in "$@"; do
     case $i in
@@ -129,14 +142,7 @@ done
 
 install_packages
 
-echo -e "\e[32mCheck previous masternode installation\e[0m"
-
-systemctl status genomnode --no-pager --full 2>/dev/null
-
-if [[ $? -eq 0 ]]; then
-    echo -e "\e[33mMasternode is up, stop it\e[0m"
-    systemctl stop genomnode
-fi
+stop_node
 
 check_rpc_port
 
@@ -147,7 +153,5 @@ download_geth_release
 install_genom_service
 
 journalctl --unit=genomnode | tail
-
-echo -e "\e[32mInstallation complete. MN registration data:\e[0m"
 
 node_info
