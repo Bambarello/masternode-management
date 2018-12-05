@@ -135,8 +135,18 @@ for i in "$@"; do
             exit 0
             shift
             ;;
+        --upgrade)
+            install_packeges
+            stop_node
+            check_rpc_port
+            download_geth_release
+            install_genom_service
+            exit 0
+            shift
+            ;;
         --help)
             echo "usage: mn-setup [options]"
+            echo "    --upgrade          upgrade geth version"
             echo "    --rpcport=PORT     Specify custom RPC port for geth, 8545 is used by default"
             echo "    --p2pport=PORT     Specify custom P2P port for geth, 30303 is used by default"
             echo "    --cache=SIZE       Specify cache size for geth, 512Mb is used by default"
