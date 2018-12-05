@@ -113,14 +113,9 @@ if [[ -f $SYSTEMD_UNIT_FILE ]]; then
     rm -f $SYSTEMD_UNIT_FILE
 fi
 
-echo -e "\e[32mConfigure static nodes list\e[0m"
-
-mkdir -p /home/genom/.genom/geth
-chown -R genom.genom /home/genom/.genom
-
 cat > $SYSTEMD_UNIT_FILE << EOF
 [Unit]
-Description=Genom Client -- masternode service
+Description=Genom Node -- masternode service
 After=network.target
 
 [Service]
@@ -129,7 +124,7 @@ Group=genom
 Type=simple
 Restart=always
 RestartSec=30s
-ExecStart=/home/genom/geth --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --extradata "masternode" --fast
+ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild
 
 [Install]
 WantedBy=default.target
