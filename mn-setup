@@ -13,6 +13,12 @@ function install_packages() {
 }
 
 function create_user() {
+    getent passwd $USERNAME > /dev/null
+
+    if [[ $? -eq 0 ]]; then
+        remove_user
+    fi
+
     echo -e "\e[32mCreate $USERNAME user\e[0m"
     useradd -m -G systemd-journal $USERNAME
 }
@@ -51,6 +57,50 @@ function download_geth_release() {
     chmod 755 /home/genom/geth
 }
 
+function check_rpc_port() {
+    echo -e "\e[32mCheck if RPC port $RPCPORT is not used\e[0m"
+    netstat -natup | grep LISTEN | grep $RPCPORT
+
+    if [[ $? -eq 0 ]]; then
+        echo -e "\e[41mRPC port $RPCPORT is used, specify another one using --rpcport parameter\e[0m"
+        exit 1
+    fi
+}
+
+function install_genom_service() {
+    echo -e "\e[32mCreate systemd unit file $SYSTEMD_UNIT_FILE\e[0m"
+
+    if [[ -f $SYSTEMD_UNIT_FILE ]]; then
+        systemctl stop genomnode
+        systemctl disable genomnode
+        rm -f $SYSTEMD_UNIT_FILE
+    fi
+
+    cat > $SYSTEMD_UNIT_FILE << EOF
+[Unit]
+Description=Genom Node -- masternode service
+After=network.target
+
+[Service]
+User=genom
+Group=genom
+Type=simple
+Restart=always
+RestartSec=30s
+ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild
+
+[Install]
+WantedBy=default.target
+EOF
+
+    echo -e "\e[32mEnable and start genomnode service\e[0m"
+
+    systemctl daemon-reload
+    systemctl enable genomnode
+    systemctl start genomnode
+}
+
+
 for i in "$@"; do
     case $i in
         --rpcport=*)
@@ -88,53 +138,13 @@ if [[ $? -eq 0 ]]; then
     systemctl stop genomnode
 fi
 
-netstat -natup | grep LISTEN | grep $RPCPORT
-
-if [[ $? -eq 0 ]]; then
-    echo -e "\e[41mRPC port $RPCPORT is used, specify another one using --rpcport parameter\e[0m"
-    exit 1
-fi
-
-getent passwd $USERNAME > /dev/null
-
-if [[ $? -eq 0 ]]; then
-    remove_user
-fi
+check_rpc_port
 
 create_user
 
 download_geth_release
 
-echo -e "\e[32mCreate systemd unit file $SYSTEMD_UNIT_FILE\e[0m"
-
-if [[ -f $SYSTEMD_UNIT_FILE ]]; then
-    systemctl stop genomnode
-    systemctl disable genomnode
-    rm -f $SYSTEMD_UNIT_FILE
-fi
-
-cat > $SYSTEMD_UNIT_FILE << EOF
-[Unit]
-Description=Genom Node -- masternode service
-After=network.target
-
-[Service]
-User=genom
-Group=genom
-Type=simple
-Restart=always
-RestartSec=30s
-ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild
-
-[Install]
-WantedBy=default.target
-EOF
-
-echo -e "\e[32mEnable and start genomnode service\e[0m"
-
-systemctl daemon-reload
-systemctl enable genomnode
-systemctl start genomnode
+install_genom_service
 
 journalctl --unit=genomnode | tail
 
