@@ -29,6 +29,24 @@ function node_info() {
     echo "IP address: `echo ${ip%:*} | sed -e 's/\"//'`"
 }
 
+function download_geth_release() {
+    local release=$RELEASE
+
+    echo -e "\e[32mDownload geth release $RELEASE\e[0m"
+
+    case `arch` in
+        "armv7l")
+            release="${RELEASE%/*}/geth-linux-arm-7"
+            ;;
+    esac
+
+    wget -q $release -O /home/genom/geth
+
+    chown genom.genom /home/genom/geth
+
+    chmod 755 /home/genom/geth
+}
+
 for i in "$@"; do
     case $i in
         --rpcport=*)
@@ -85,13 +103,7 @@ fi
 
 create_user
 
-echo -e "\e[32mDownload geth release $RELEASE\e[0m"
-
-wget $RELEASE -O /home/genom/geth -o /dev/null
-
-chown genom.genom /home/genom/geth
-
-chmod 755 /home/genom/geth
+download_geth_release
 
 echo -e "\e[32mCreate systemd unit file $SYSTEMD_UNIT_FILE\e[0m"
 
