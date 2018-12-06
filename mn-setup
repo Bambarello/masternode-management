@@ -187,5 +187,5 @@ if [[ $FROM_SCRATCH != "n" ]]; then
         node_info
     fi
 else
-    echo "Nothing to do, please specify --upgrade or --from scratch flag"
+    echo "Nothing to do, please specify --upgrade or --from-scratch flag"
 fi
