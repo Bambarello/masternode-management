@@ -93,7 +93,7 @@ Group=genom
 Type=simple
 Restart=always
 RestartSec=30s
-ExecStart=/home/genom/geth --hydra --rpc --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild --port $P2PPORT
+ExecStart=/home/genom/geth --hydra --rpcport $RPCPORT --cache=$CACHE_SIZE --atxi.autobuild --port $P2PPORT
 
 [Install]
 WantedBy=default.target
