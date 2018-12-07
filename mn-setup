@@ -184,6 +184,9 @@ if [[ $FROM_SCRATCH != "n" ]]; then
 
         journalctl --unit=genomnode | tail
 
+        # wait few seconds to be sure what node is up and running
+        sleep $(( ( RANDOM % 5 )  + 1 ))
+
         node_info
     fi
 else
