@@ -143,6 +143,8 @@ for i in "$@"; do
             check_rpc_port
             download_geth_release
             install_genom_service
+            sleep $(( ( RANDOM % 5 )  + 1 ))
+            node_info
             exit 0
             shift
             ;;
