@@ -43,7 +43,7 @@ function node_info() {
     echo `/home/genom/geth version | grep ^Version`
     echo "P2P Port: $P2PPORT"
     echo "RPC Port: $RPCPORT"
-    echo "IP address: `curl -s ifconfig.co`"
+    echo "IP address: `curl -4 -s ifconfig.co`"
 }
 
 function download_geth_release() {
